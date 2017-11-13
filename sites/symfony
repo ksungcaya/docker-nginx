@@ -1,0 +1,49 @@
+server {
+    listen 80;
+    listen 443 ssl;
+
+    root /var/www/html/web;
+
+    index index.html index.htm index.php;
+
+    server_name _;
+
+    charset utf-8;
+
+    location = /favicon.ico { log_not_found off; access_log off; }
+    location = /robots.txt  { log_not_found off; access_log off; }
+
+    location / {
+        try_files $uri /app_dev.php$is_args$args;
+    }
+
+    # DEV
+    location ~ ^/(app_dev|config)\.php(/|$) {
+        fastcgi_read_timeout 120;
+        fastcgi_pass php:9000;
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        include fastcgi_params;
+        fastcgi_param  SCRIPT_FILENAME  $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+    }
+
+    # PROD
+    location ~ ^/app\.php(/|$) {
+        fastcgi_read_timeout 120;
+        fastcgi_pass php:9000;
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        include fastcgi_params;
+        fastcgi_param  SCRIPT_FILENAME  $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        internal;
+    }
+
+    fastcgi_busy_buffers_size 512k;
+    fastcgi_buffer_size 512k;
+    fastcgi_buffers 16 512k;
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+
